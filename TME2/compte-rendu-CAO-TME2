@@ -1,0 +1,205 @@
+Nom :CAO
+Prenom : Gabriel
+Numéro étudiant : 3679695
+
+I. Statistique d'execution d'une commande SHELL
+
+Execution de sleep 5 avec time :
+
+real	0m5,002s
+user	0m0,002s
+sys	0m0,000s
+
+La commande sleep 5 n'utilise pas le cpu en mode kernel et en mode user. La tâche est à l'état bloqué
+et ne consomme donc aucune ressource.
+
+Execution de loopcpu.c :
+real	0m6,293s
+user	0m6,293s
+sys	0m0,000s
+
+L'execution du programme loopcpu a duré 6.293 s mais le temps passé en mode kernel est nul. La tâche n'implique aucune entrée dans le noyau, on reste dans le programme utilisateur c'est pourquoi user est égal à 6.293s.
+
+Execution de loopsys.c :
+real	0m18,566s
+user	0m13,177s
+sys	0m5,389s
+
+L'execution du programme implique d'entrer en mode kernel car on fait un appel système pour obtenir le PID du processus courant.
+
+II. Lancement d'une commande shell depuis un programme C
+
+Programme :
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/time.h>
+void lance_commande(char *commande)
+{
+  
+
+  if (system(commande))
+  {
+    fprintf(stderr, "La commande n'a pas pu être executée correctement");
+  }
+ 
+}
+int main(int argc, char *argv[])
+{
+  for (int i = 1; i < argc; i++)
+  {
+    lance_commande(argv[i]);
+  }
+
+  return 0;
+}
+
+III. Calcul du temps de réponse en utilisant gettimeofday
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/time.h>
+void lance_commande(char *commande)
+{
+  struct timeval ty;
+  gettimeofday(&ty, NULL);
+  time_t time_1 = ty.tv_sec;
+  suseconds_t times_1 = ty.tv_usec;
+  if (system(commande))
+  {
+    fprintf(stderr, "La commande n'a pas pu être executée correctement");
+  }
+  gettimeofday(&ty, NULL);
+  time_t time_2 = ty.tv_sec;
+  suseconds_t times_2 = ty.tv_usec;
+  printf("La commande a mis %ld secondes et %ld microseconds pour s'executer\n", time_2 - time_2, times_2 - times_1);
+}
+int main(int argc, char *argv[])
+{
+  for (int i = 1; i < argc; i++)
+  {
+    lance_commande(argv[i]);
+  }
+
+  return 0;
+}
+
+IV. Calcul des statistiques
+
+./mytimes "sleep 5" ./loopcpu ./loopsys
+
+
+Statistiques de sleep 5
+Temps total : 0.000000
+Temps utilisateur : 0.000000
+Temps système : 0.000000
+Temps utilisateur fils : 0.000000
+Temps système fils : 0.000000
+
+Statistiques de ./loopcpu
+Temps total : 6.520000
+Temps utilisateur : 0.000000
+Temps système : 0.000000
+Temps utilisateur fils : 6.520000
+Temps système fils : 0.000000
+
+Statistiques de ./loopsys
+Temps total : 15.680000
+Temps utilisateur : 0.000000
+Temps système : 0.000000
+Temps utilisateur fils : 10.680000
+Temps système fils : 5.000000
+
+V. Changement de priorité
+
+F S   UID   PID  PPID  C PRI  NI ADDR SZ WCHAN  TTY          TIME CMD
+0 S 3679695 11558 11552  0 80  0 -  2931 -      pts/0    00:00:00 bash
+0 S 3679695 11589 11558  1 80  0 - 166637 SyS_po pts/0   00:00:02 gedit
+0 R 3679695 11653 11558  0 80  0 -  7467 -      pts/0    00:00:00 ps
+
+La priorité de ps est de 0. Sa priorité est donc maximale.
+
+
+nice -19 ps -l :
+
+F S   UID   PID  PPID  C PRI  NI ADDR SZ WCHAN  TTY          TIME CMD
+0 S 3679695 11558 11552  0 80  0 -  2931 -      pts/0    00:00:00 bash
+0 S 3679695 11589 11558  1 80  0 - 166645 SyS_po pts/0   00:00:03 gedit
+0 R 3679695 11663 11558  0 99 19 -  7467 -      pts/0    00:00:00 ps
+
+La priorité de ps est de 19.
+
+./mytimes "./loopcpu" &
+./mytimes "./loopcpu" &
+./mytimes "./loopcpu" &
+./mytimes "./loopcpu" &
+./mytimes "./loopcpu" &
+./mytimes "./loopcpu" &
+./mytimes "./loopcpu" &
+./mytimes "./loopcpu" &
+./mytimes "nice -19 ./loopcpu" &
+
+Statistiques de ./loopcpu
+Temps total : 8.490000
+Temps utilisateur : 0.000000
+Temps système : 0.000000
+Temps utilisateur fils : 8.490000
+Temps système fils : 0.000000
+
+Statistiques de ./loopcpu
+Temps total : 8.500000
+Temps utilisateur : 0.000000
+Temps système : 0.000000
+Temps utilisateur fils : 8.500000
+Temps système fils : 0.000000
+
+Statistiques de ./loopcpu
+Temps total : 8.500000
+Temps utilisateur : 0.000000
+Temps système : 0.000000
+Temps utilisateur fils : 8.500000
+Temps système fils : 0.000000
+
+Statistiques de ./loopcpu
+Temps total : 8.500000
+Temps utilisateur : 0.000000
+Temps système : 0.000000
+Temps utilisateur fils : 8.500000
+Temps système fils : 0.000000
+
+Statistiques de ./loopcpu
+Temps total : 8.500000
+Temps utilisateur : 0.000000
+Temps système : 0.000000
+Temps utilisateur fils : 8.500000
+Temps système fils : 0.000000
+
+Statistiques de ./loopcpu
+Temps total : 8.510000
+Temps utilisateur : 0.000000
+Temps système : 0.000000
+Temps utilisateur fils : 8.510000
+Temps système fils : 0.000000
+
+Statistiques de ./loopcpu
+Temps total : 8.520000
+Temps utilisateur : 0.000000
+Temps système : 0.000000
+Temps utilisateur fils : 8.520000
+Temps système fils : 0.000000
+
+Statistiques de ./loopcpu
+Temps total : 8.480000
+Temps utilisateur : 0.000000
+Temps système : 0.000000
+Temps utilisateur fils : 8.480000
+Temps système fils : 0.000000
+
+Statistiques de nice -19 ./loopcpu
+Temps total : 6.560000
+Temps utilisateur : 0.000000
+Temps système : 0.000000
+Temps utilisateur fils : 6.560000
+Temps système fils : 0.000000
+
+

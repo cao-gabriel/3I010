@@ -1,0 +1,99 @@
+Pas d'overhead (commutation instantanée)
+Quantum q
+t = T = 0 -> (n + N) commandes à traiter
+édition durée c = k.q
+Compilation C = k.q
+
+temps de reponse = k.(n + N).q pour l'édition ( k = c/q) -> 1.5 ms
+		   K.(n + N).q pour la compulation (K = C/q) 45 ms
+
+temps de réponse  = fin commande - lancement de commande
+
+édition : durée c = k.q
+Pendant (n-1).q + N.q quantum, le processeur est utilisé oar kes autres processus.
+Puisque le processeur est équitable, le processus reprend la main pdt q.
+
+Le temps partagé est indispensable en monoprocesseur car les utilisateurs dont la commande est courte ne sont pas désavantagés.
+
+quantum = q
+overhead = s
+
+% tps commutation ? s / (s + q)
+Valable si chaque tache utilise tout son quantum
+
+c = 20 ms -> tps total = 21 ms (overhead en fin de taches)
+c = 500 ms -> tps total = 5 ( q + s) = 505 ms
+
+%tps commutation = 1/21 = 5%
+		 = 5/505 = 1%
+
+Le temps d'overhead prend de l'importance pour les taches courtes.
+Plus le quantum est long, plus les tâches courtes sont pénalisés en temps de réponse.
+
+Plus le quantum est court, plus l'overhead prend d'importance (multiplication des commutations).
+
+-> Compromis...
+
+10 ms = E4 us
+14 bits pour coder 10 000 et 1 bits de signe donc
+15 bits dans le registre-2^14 ...2^14 - 1
+
+On ne doit jamais arrêter de mesurer le temps pour avoir une valeur correcte de RHU.
+Priorité max  = 0
+Au chargement de la tâche :
+	proc[i].p-cpu = 0
+	RHU=RHU + RTMAX - RTEMPO
+	RTempo = RTMAX
+	RIT fin de la routine et démasquage des interruptions
+
+Traitement IT horloge
+save(ITE) //sauvegarde de proc[ITE].p_registers
+proc[ITE].p_flag = Prêt
+proc[ITE] =.p_cpu = RTMAX - RTEMPO
+ITE = election ()
+restore(ITE) //restaure proc[ITE].p_register
+proc[ITE].p_flag = élu
+RHU=RHU + RTMAX - RTEMPO
+RTempo = RTMAX
+
+Haut niveau de priorité (interruptions masquées)
+->pendant le traitement le système ne peut prendre en compte aucun autre évenement
+RTempo est décrémenté jusqu'a une valeur min (car il est codée sur un nombre fini de bit) et il est alors rénitialisé à RTMAX. On a alors une mise à jour du RHU fausse.
+
+Interruption à chaque TICK
+ -> Réactivité ex : alarme elles ne sont pas gérées de manière immédiate mais examinées à chaque tick.
+
+On note TCK la durée du tick
+nbtick++;
+proc[ITE].p_cpu += TCK - RTEMPO;
+
+if(nbtick == 10) {
+	proc[ITE].p_prio += nbtick
+	save(ITE)
+	ITE = election()
+	restore(ITE)
+	proc[ITE].p_flag = ELU
+	nbtick=0
+}
+RHU=RHU + RTMAX - RTEMPO
+RTempo = RTMAX
+
+A la durée du tick près et pas à la micro seconde près.
+
+Le système fait de l'échantillonage. Il regarde l'état de la tâche au moment du tick.
+Tâche longue -> précision acceptable
+Tâche courte -> résultat incohérent
+
+
+
+
+
+
+
+
+
+
+
+
+
+
