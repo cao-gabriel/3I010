@@ -11,8 +11,9 @@ int main(int argc, char const *argv[]) {
 
    char buffer[255];
    char** args = (char**)(malloc(sizeof(char*)*NB_ARGS));
-   int cpt;
+   int cpt = 0;
    char dernierChar ;
+   printf("%d\n", cpt);
 
    while(printf(">") && fgets(buffer, sizeof(buffer), stdin) != NULL)
    {
@@ -56,7 +57,9 @@ int main(int argc, char const *argv[]) {
        cpt = 0;
     }
 
-
+    for (int i = 0; i < NB_ARGS; i++) {
+      free(args[i]);
+    }
    free(args);
    return EXIT_SUCCESS;
 }

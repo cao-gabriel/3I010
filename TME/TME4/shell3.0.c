@@ -12,7 +12,7 @@ int main(int argc, char const *argv[]) {
 
    char buffer[255];
    char** args = (char**)(malloc(sizeof(char*)*NB_ARGS));
-   int cpt;
+   int cpt = 0;
    char dernierChar ;
    while(printf(">") && fgets(buffer, sizeof(buffer), stdin) != NULL)
    {
@@ -50,6 +50,8 @@ int main(int argc, char const *argv[]) {
      // create a new process running the command stored in the buffer
      if(fork() == 0)
      {
+       if(args[0] == NULL) return EXIT_SUCCESS;
+
        //if the user use the command times, don't print the result
        if(strcmp(args[0], "times") == 0){
          int file_desc = open("/dev/null",O_WRONLY | O_APPEND);
@@ -66,7 +68,8 @@ int main(int argc, char const *argv[]) {
          if(dernierChar != '&')
          {
            wait(NULL);
-           if(strcmp(args[0], "times") == 0)
+
+           if(args[0] != NULL && strcmp(args[0], "times") == 0)
            {
              //Stopping the chrono and evaluate time
              gettimeofday (&temps_apres, NULL);
@@ -79,6 +82,9 @@ int main(int argc, char const *argv[]) {
     }
 
     //return the allocated memory
+   for (int i = 0; i < NB_ARGS; i++) {
+     free(args[i]);
+   }
    free(args);
    return EXIT_SUCCESS;
 }

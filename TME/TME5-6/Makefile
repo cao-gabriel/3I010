@@ -1,4 +1,4 @@
-IPCPATH = /Infos/lmd/2017/licence/ue/3I010-2018fev/libipc/libipc/lib 
+IPCPATH = ./libipc/lib
 CFLAGS = -Wall -I$(IPCPATH)
 
 all: Tab1case TabNcases  
