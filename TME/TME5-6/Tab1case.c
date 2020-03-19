@@ -20,7 +20,7 @@
 	   #define EMET  0
      int recep[NR];
      #define RECEP recep
-     #define MUTEX 6
+     #define MUTEX NR + 1
 
 /************************************************************/
 
