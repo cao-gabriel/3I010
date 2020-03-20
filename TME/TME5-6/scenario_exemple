@@ -1,0 +1,70 @@
+émetteur 0 a été crée
+émetteur 1 a été crée
+l'émetteur 0 envoie un message sur la case 0 du tampon
+récepteur 0 a été crée
+l'émetteur 1 envoie un message sur la case 1 du tampon
+Le récepteur 0 a reçu le message à la case 0 :
+0
+récepteur 1 a été crée
+l'émetteur 0 envoie un message sur la case 2 du tampon
+Le récepteur 0 a reçu le message à la case 1 :
+1
+Le récepteur 1 a reçu le message à la case 0 :
+0
+Le récepteur 0 a reçu le message à la case 2 :
+0
+récepteur 2 a été crée
+Le récepteur 1 a reçu le message à la case 1 :
+1
+récepteur 3 a été crée
+Le récepteur 0 a reçu le message à la case 0 :
+0
+Le récepteur 2 a reçu le message à la case 0 :
+0
+récepteur 4 a été crée
+Le récepteur 1 a reçu le message à la case 2 :
+0
+Le récepteur 3 a reçu le message à la case 0 :
+0
+Le récepteur 3 est le dernier à la case 0
+l'émetteur 1 envoie un message sur la case 0 du tampon
+Le récepteur 0 a reçu le message à la case 1 :
+1
+Le récepteur 2 a reçu le message à la case 1 :
+1
+Le récepteur 4 a reçu le message à la case 0 :
+1
+Le récepteur 1 a reçu le message à la case 0 :
+1
+Le récepteur 3 a reçu le message à la case 1 :
+1
+Le récepteur 3 est le dernier à la case 1
+Le récepteur 2 a reçu le message à la case 2 :
+0
+l'émetteur 0 envoie un message sur la case 1 du tampon
+Le récepteur 4 a reçu le message à la case 1 :
+0
+Le récepteur 1 a reçu le message à la case 1 :
+0
+Le récepteur 3 a reçu le message à la case 2 :
+0
+Le récepteur 2 a reçu le message à la case 0 :
+1
+Le récepteur 4 a reçu le message à la case 2 :
+0
+Le récepteur 4 est le dernier à la case 2
+l'émetteur 1 envoie un message sur la case 2 du tampon
+Le récepteur 3 a reçu le message à la case 0 :
+1
+Le récepteur 2 a reçu le message à la case 1 :
+0
+Le récepteur 4 a reçu le message à la case 0 :
+1
+Le récepteur 4 est le dernier à la case 0
+l'émetteur 0 envoie un message sur la case 0 du tampon
+Le récepteur 3 a reçu le message à la case 1 :
+0
+Le récepteur 4 a reçu le message à la case 1 :
+0
+Le récepteur 4 est le dernier à la case 1
+l'émetteur 1 envoie un message sur la case 1 du tampon

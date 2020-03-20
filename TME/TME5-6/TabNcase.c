@@ -16,21 +16,24 @@
 /************************************************************/
 
 /* definition des semaphores */
-  #define SATTENTE (NMAX + 4)
-  #define SCONS (NMAX + 3)
-  #define SPROD (NMAX + 2)
-  #define MUTEXP (NMAX + 1)
-  #define MUTEXC (NMAX)
-  int sc[NMAX];
-  #define SC sc
+/* sémaphore des récepteurs */
+  int srec[NR];
+  #define SREC srec
+  #define SMUTEXR NR
+/* sémaphores des emetteurs */
+  #define SEMET (NR + 1)
+  #define SMUTEXE (NR + 2)
 
 /************************************************************/
 
 /* definition de la memoire partagee */
 typedef struct {
-  int nb_recepteurs;
+  /* compteur de nombre de récepteurs pour chaque case du tampon */
+  int nb_recepteurs[NMAX];
+  /* indice de la case pour les émetteurs */
   int id;
-  int ir;
+  /* le buffer pour les messages */
+  int buffer[NMAX];
 
 } t_segpart;
 
@@ -58,139 +61,128 @@ t_segpart *sp;
 /************************************************************/
 
 /* fonction EMETTEUR */
+void emet(int i) {
 
-	void deposer(int number){
-    P(SPROD);
-    int i;
-    P(MUTEXP);
-    i = sp->id;
-    sp->id++;
-    sp->id %= NMAX;
-    P(SC[i]);
-    V(MUTEXP);
-    printf("L'émetteur %d a déposé le message à la case %d\n", number, i);
-    V(SC[i]);
-    for(int j = 0; j < NR; j++){
-
-      V(SCONS);
-    }
-
-
+  int indice;
+  P(SEMET);
+  P(SMUTEXE);
+  indice = sp -> id;
+  sp -> buffer[indice] = i;
+  printf("l'émetteur %d envoie un message sur la case %d du tampon\n",i, indice);
+  sp -> id = (indice + 1) % NMAX;
+  /* signale aux récepteurs qu'ils peuvent prendre le message*/
+  for (int j = 0; j < NR; j++) {
+    V(SREC[j]);
   }
+  V(SMUTEXE);
+
+
+}
+
 
 /************************************************************/
 
 /* fonction RECEPTEUR */
+void recoit(int i, int *indice_r) {
+  /* Prend un ticket parmi son stock de ticket */
+  P(SREC[i]);
+  P(SMUTEXR);
+  int nb_r = sp -> nb_recepteurs[*indice_r];
+  /* signale qu'il a pris le message à l'indice indiquée */
+  sp -> nb_recepteurs[*indice_r] = nb_r + 1;
+  /* Récupération du message */
+  int message = sp -> buffer[*indice_r];
 
-void retirer(int number){
-  P(SCONS);
-  int i;
-  P(MUTEXC);
-  sp->nb_recepteurs++;
-
-  i = sp->ir;/*
-  sp->ir++;
-  sp->ir %= NMAX;
-  */
-  P(SC[i]);
-
-  printf("Le recepteur %d a reçu le message à la case %d\n", number, i);
-  V(SC[i]);
-
-  if(sp->nb_recepteurs == NR){
-    sp->nb_recepteurs = 0;
-    sp->ir++;
-    sp->ir %= NMAX;
-    V(SPROD);
+  printf("Le récepteur %d a reçu le message à la case %d :\n%d\n",
+  i, *indice_r, message);
+  /* Si le récepteur est le dernier à prendre le message*/
+  if(nb_r + 1 == NR){
+    sp -> nb_recepteurs[*indice_r] = 0;
+    printf("Le récepteur %d est le dernier à la case %d\n", i, *indice_r);
+    V(SEMET);
   }
-  V(MUTEXC);
+  V(SMUTEXR);
+  /* change de case de reception*/
+  *indice_r = (*indice_r + 1)%NMAX;
+
 }
+
 /************************************************************/
 
 int main() {
     struct sigaction action;
-    /* autres variables (a completer) */
-    for (int i = 0; i < NMAX; i++) {
-      SC[i] = i;
-    }
+    /* indice de la case pour un récepteur */
+    int ir;
+    /* pid des processus fils */
+    int pid;
+    int i;
     setbuf(stdout, NULL);
 
 /* Creation du segment de memoire partagee */
-
-if ( (sp = (t_segpart *)init_shm(sizeof(t_segpart) ))== NULL) {
+sp = (t_segpart *)init_shm(sizeof(t_segpart));
+if(sp == NULL) {
   perror("init_shm");
   exit(1);
 }
-sp->nb_recepteurs = 0;
-sp->id = 0;
-sp->ir = 0;
+
+/* initialisation des champs de la structure */
+sp -> id = 0;
+for (i = 0; i < NMAX; i++) {
+  sp -> nb_recepteurs[i] = 0;
+}
+
 
 /* creation des semaphores */
-
-if ( creer_sem(NR + 5) == -1) {
-        perror("creer_sem");
-        exit(1);
+if(creer_sem(NR + 3) == -1){
+  perror("creer_sem");
+  exit(1);
 }
 
 /* initialisation des semaphores */
 
-for (int i = 0; i < NMAX; i++) {
-  init_un_sem(SC[i], 1);
+/* les récepteurs ne peuvent pas recevoir à l'initialisation */
+for ( i= 0; i < NR; i++) {
+  init_un_sem(SREC[i], 0);
 }
+/* sémaphore d'exclusion mutuelle */
+init_un_sem(SMUTEXR, 1);
 
-init_un_sem(MUTEXC, 1);
-init_un_sem(MUTEXP, 1);
-init_un_sem(SPROD, NMAX);
-init_un_sem(SCONS, 0);
-init_un_sem(SATTENTE, 0);
+/* les émetteurs peuvent produire NMAX messages car le tampon est vide */
+init_un_sem(SEMET, NMAX);
 
-
-
+/* sémaphore d'exclusion mutuelle pour les émetteur */
+init_un_sem(SMUTEXE, 1);
 
 /* creation des processus emetteurs */
-for (int i = 0; i < NE; i++) {
-   int p = fork();
-   if(p == 0){
-     while (1) {
-       /*Attend la consommation d'un ticket producteur par un consommateur*/
-       /*Le nombre de ticket producteur est initialisé à NMAX car l'entrepôt
-         peut contenir NMAX message*/
+for ( i = 0; i < NE; i++) {
+  pid = fork();
+  if(pid == 0){
+    printf("émetteur %d a été crée\n",i );
+    while(1){
+      emet(i);
 
-       /*Dépose un message à une case id puis incrémente id pour signaler
-         aux autres producteurs de mettre le message à la case suivante*/
-       deposer(i);
-       /*Quand un producteur finit de déposer un message, il crée NR tickets
-         pour que chaque récepteurs consomme le message*/
 
-       /*Pour voir le déroulement*/
-      // sleep(3);
-     }
-     exit(EXIT_SUCCESS);
-   }
-   emet_pid[i] = p;
+    }
+    return EXIT_SUCCESS;
+  }
+  emet_pid[i] = pid;
 }
 
 /* creation des processus recepteurs */
+for ( i = 0; i < NR; i++) {
+  pid = fork();
+  if(pid == 0){
+    printf("récepteur %d a été crée\n",i );
+  
+    while(1){
+      recoit(i, &ir);
 
-for (int i = 0; i < NR; i++) {
-   int p = fork();
-   if(p == 0){
-     while (1) {
-       /*Attend la création d'un ticket consommateur*/
-       /*Le nombre de ticket consommateur est initialisé à 0 car l'entrepôt
-         est vide au départ*/
-       /*Consomme le message à la case ir, incrémente nb_recepteurs puis
-         se bloque si le recepteur courant n'est pas le dernier ayant consomme
-         sinon (si c'est le dernier) rénitialise nb_recepteurs, */
-       retirer(i);
-
-
-      // sleep(3);
-     }
-     exit(EXIT_SUCCESS);
-   }
-   recep_pid[i] = p;
+    }
+    return EXIT_SUCCESS;
+  }
+  recep_pid[i] = pid;
 }
+
 /* redefinition du traitement de Ctrl-C pour arreter le programme */
 
     sigemptyset(&action.sa_mask);
