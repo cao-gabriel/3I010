@@ -173,7 +173,7 @@ for ( i = 0; i < NR; i++) {
   pid = fork();
   if(pid == 0){
     printf("récepteur %d a été crée\n",i );
-  
+
     while(1){
       recoit(i, &ir);
 
